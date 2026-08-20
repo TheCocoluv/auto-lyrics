@@ -9,6 +9,24 @@ data class TrackInfo(
     val durationMs: Long
 )
 
+data class LyricsCandidate(
+    val provider: String,
+    val providerId: String?,
+    val title: String,
+    val artist: String,
+    val album: String,
+    val durationMs: Long?,
+    val instrumental: Boolean,
+    val syncedLyrics: String?,
+    val plainLyrics: String?
+) {
+    val hasSyncedLyrics: Boolean
+        get() = !syncedLyrics.isNullOrBlank()
+
+    val hasPlainLyrics: Boolean
+        get() = !plainLyrics.isNullOrBlank()
+}
+
 data class LyricWord(
     val timeMs: Long,
     val text: String

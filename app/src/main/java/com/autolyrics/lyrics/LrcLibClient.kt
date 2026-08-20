@@ -1,5 +1,6 @@
 package com.autolyrics.lyrics
 
+import com.autolyrics.model.LyricsCandidate
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
@@ -18,6 +19,7 @@ object LrcLibClient {
     private val gson = Gson()
     private const val BASE_URL = "https://lrclib.net/api"
     private const val USER_AGENT = "AutoLyrics v1.0 (https://github.com/user/auto-lyrics)"
+    private const val PROVIDER_NAME = "LRCLIB"
 
     data class LrcLibResponse(
         @SerializedName("id") val id: Int?,
@@ -103,7 +105,7 @@ object LrcLibClient {
         }
     }
 
-    private fun searchAll(trackName: String, artistName: String): List<LrcLibResponse> {
+    fun searchAll(trackName: String, artistName: String): List<LrcLibResponse> {
         val urlBuilder = "$BASE_URL/search".toHttpUrl().newBuilder()
             .addQueryParameter("track_name", trackName)
 
@@ -125,6 +127,22 @@ object LrcLibClient {
             }
         } catch (_: Exception) {
             emptyList()
+        }
+    }
+
+    fun searchCandidates(trackName: String, artistName: String): List<LyricsCandidate> {
+        return searchAll(trackName, artistName).map { result ->
+            LyricsCandidate(
+                provider = PROVIDER_NAME,
+                providerId = result.id?.toString(),
+                title = result.trackName.orEmpty(),
+                artist = result.artistName.orEmpty(),
+                album = result.albumName.orEmpty(),
+                durationMs = result.duration?.times(1_000L),
+                instrumental = result.instrumental == true,
+                syncedLyrics = result.syncedLyrics,
+                plainLyrics = result.plainLyrics
+            )
         }
     }
 }

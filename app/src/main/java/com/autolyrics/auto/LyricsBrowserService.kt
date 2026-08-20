@@ -19,6 +19,7 @@ import com.autolyrics.model.LyricsState
 import com.autolyrics.model.LyricsStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import android.util.Log
 
 class LyricsBrowserService : MediaBrowserServiceCompat() {
 
@@ -63,6 +64,8 @@ class LyricsBrowserService : MediaBrowserServiceCompat() {
         private const val SYNC_MENU_ID = "sync_menu"
         private const val SYNC_MINUS_ID = "sync_minus"
         private const val SYNC_PLUS_ID = "sync_plus"
+
+        private const val SEARCH_MENU_ID = "search_lyrics"
         private const val SYNC_STEP_MS = 50L
         private const val WINDOW_SIZE = 3
         private const val PLAIN_WINDOW_SIZE = 4
@@ -77,6 +80,10 @@ class LyricsBrowserService : MediaBrowserServiceCompat() {
     override fun onCreate() {
         super.onCreate()
         mediaTracker = MediaTracker.getInstance(this)
+        Log.d(
+            "AutoLyrics",
+            "LyricsBrowserService created"
+        )
 
         val prefs = getSharedPreferences("auto_lyrics_prefs", MODE_PRIVATE)
         aaKaraokeEnabled = prefs.getBoolean("aa_karaoke_enabled", true)
@@ -146,7 +153,15 @@ class LyricsBrowserService : MediaBrowserServiceCompat() {
         parentId: String,
         result: Result<MutableList<MediaBrowserCompat.MediaItem>>
     ) {
+        Log.d(
+            "AutoLyrics",
+            "onLoadChildren parentId=$parentId"
+        )
         val state = mediaTracker.state.value
+        Log.d(
+            "AutoLyrics",
+            "browse state=${state.status}, track=${state.track?.title}"
+        )
         val items = mutableListOf<MediaBrowserCompat.MediaItem>()
 
         if (parentId == SYNC_MENU_ID) {
@@ -171,6 +186,19 @@ class LyricsBrowserService : MediaBrowserServiceCompat() {
             LyricsStatus.NOT_FOUND -> {
                 addTrackHeader(state, items)
                 items.add(buildTextItem("not_found", "No lyrics found for this track"))
+                items.add(
+                    buildBrowsableItem(
+                        SEARCH_MENU_ID,
+                        "🔍 Search Lyrics",
+                        "Find alternative lyrics"
+                    )
+                )
+                items.add(
+                    buildTextItem(
+                        "debug_test",
+                        "🐣 TEST ITEM"
+                    )
+                )
             }
             LyricsStatus.ERROR -> {
                 addTrackHeader(state, items)
@@ -602,11 +630,19 @@ class LyricsBrowserService : MediaBrowserServiceCompat() {
     }
 
     private fun forceRefresh() {
+        Log.d(
+            "AutoLyrics",
+            "forceRefresh called"
+        )
         displayedWindowStart = -1
         displayedWindowEnd = -1
         displayedCurrentIdx = -1
         lastNotifyTime = 0L
         resetKaraokeState()
+        Log.d(
+            "AutoLyrics",
+            "notifyChildrenChanged ROOT"
+        )
         notifyChildrenChanged(ROOT_ID)
         notifyChildrenChanged(SYNC_MENU_ID)
     }
